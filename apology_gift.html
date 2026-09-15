@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>آسف</title>
+<style>
+  :root{
+    --bg-deep:#0b0f2b;
+    --bg-mid:#141a3d;
+    --gold:#e8c07d;
+    --rose:#e8a5a5;
+    --text-light:#f5f0e6;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    height:100%;
+    background:radial-gradient(ellipse at top, var(--bg-mid), var(--bg-deep) 70%);
+    overflow-x:hidden;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    color:var(--text-light);
+  }
+  #stars, #stars2, #stars3{
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    pointer-events:none; z-index:0;
+  }
+  .star{
+    position:absolute; background:#fff; border-radius:50%;
+    animation:twinkle linear infinite;
+  }
+  @keyframes twinkle{
+    0%,100%{opacity:0.2;}
+    50%{opacity:1;}
+  }
+  .container{
+    position:relative; z-index:2;
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:30px 20px;
+  }
+  .stage{
+    display:grid;
+    width:100%;
+    max-width:640px;
+    justify-items:center;
+  }
+  .stage > *{
+    grid-area:1 / 1;
+  }
+
+  /* Envelope */
+  #envelope-wrap{
+    text-align:center;
+    cursor:pointer;
+    transition:opacity 0.5s ease, transform 0.5s ease;
+  }
+  #envelope-wrap:hover .envelope{
+    transform:translateY(-4px);
+    box-shadow:0 20px 45px rgba(0,0,0,0.55), 0 0 40px rgba(232,192,125,0.25);
+  }
+  #envelope-wrap.hidden{
+    opacity:0; transform:scale(0.9);
+    pointer-events:none;
+    visibility:hidden;
+    transition:opacity 0.5s ease, transform 0.5s ease, visibility 0s 0.5s;
+  }
+  .envelope{
+    width:280px; height:190px; margin:0 auto 30px;
+    position:relative;
+    background:linear-gradient(135deg,#3a2f5c,#1c1440);
+    border-radius:10px;
+    box-shadow:0 15px 40px rgba(0,0,0,0.5), 0 0 30px rgba(232,192,125,0.15);
+    overflow:visible;
+    perspective:600px;
+    transition:transform 0.4s ease, box-shadow 0.4s ease;
+  }
+  /* bottom pocket of the envelope (drawn first so the flap sits above it) */
+  .envelope::after{
+    content:'';
+    position:absolute; left:0; bottom:0; width:100%; height:70%;
+    background:linear-gradient(135deg,#463a6e,#241a4a);
+    border-radius:0 0 10px 10px;
+    clip-path:polygon(0 100%, 50% 35%, 100% 100%);
+    z-index:1;
+  }
+  .envelope::before{
+    content:'';
+    position:absolute; top:0; left:0; width:0; height:0;
+    border-left:140px solid transparent;
+    border-right:140px solid transparent;
+    border-top:95px solid #342763;
+    z-index:3;
+    transform-origin:top;
+    transform-style:preserve-3d;
+    transition:transform 0.8s ease;
+  }
+  .envelope.open::before{
+    transform:rotateX(180deg);
+  }
+  .heart-seal{
+    position:absolute; top:62px; left:50%; transform:translateX(-50%);
+    font-size:28px; z-index:4; animation:pulse 1.8s ease-in-out infinite;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+  }
+  @keyframes pulse{
+    0%,100%{transform:translateX(-50%) scale(1);}
+    50%{transform:translateX(-50%) scale(1.15);}
+  }
+  .prompt-text{
+    font-size:1.1rem; color:var(--gold); letter-spacing:1px;
+    margin-top:10px;
+  }
+  .prompt-sub{
+    font-size:0.85rem; color:#a7a2c9; margin-top:6px; font-family:sans-serif;
+  }
+
+  /* Letter */
+  #letter{
+    width:100%;
+    max-width:640px;
+    background:rgba(20,22,55,0.8);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(232,192,125,0.25);
+    border-radius:16px;
+    padding:40px 35px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    opacity:0; transform:translateY(24px) scale(0.98);
+    visibility:hidden;
+    pointer-events:none;
+    transition:opacity 0.8s ease, transform 0.8s ease, visibility 0s 0.8s;
+  }
+  #letter.show{
+    opacity:1; transform:translateY(0) scale(1);
+    visibility:visible;
+    pointer-events:auto;
+    transition:opacity 0.8s ease 0.15s, transform 0.8s ease 0.15s;
+  }
+  .lang-toggle{
+    display:flex; justify-content:center; gap:10px; margin-bottom:25px;
+  }
+  .lang-toggle button{
+    background:transparent; border:1px solid var(--gold); color:var(--gold);
+    padding:6px 18px; border-radius:20px; cursor:pointer;
+    font-size:0.85rem; transition:all 0.3s ease;
+  }
+  .lang-toggle button.active{
+    background:var(--gold); color:#1c1440; font-weight:bold;
+  }
+  .lang-block{ display:none; }
+  .lang-block.active{ display:block; }
+  #letter h1{
+    text-align:center; color:var(--gold); font-size:1.6rem; margin-bottom:20px;
+    font-weight:600;
+  }
+  #letter p{
+    line-height:2; font-size:1.05rem; margin-bottom:16px; color:var(--text-light);
+  }
+  .en-text{ direction:ltr; text-align:left; font-family:Georgia, serif; }
+  .ar-text{ direction:rtl; text-align:right; }
+  .signature{
+    text-align:center; margin-top:25px; color:var(--rose); font-style:italic;
+  }
+
+  /* Flower bloom button */
+  #forgive-area{
+    text-align:center; margin-top:30px;
+  }
+  #forgive-btn{
+    background:linear-gradient(135deg, var(--rose), #c97b7b);
+    border:none; color:#2a1010; padding:14px 34px; border-radius:30px;
+    font-size:1rem; font-weight:bold; cursor:pointer;
+    box-shadow:0 8px 20px rgba(232,165,165,0.3);
+    transition:transform 0.3s ease;
+  }
+  #forgive-btn:hover{ transform:scale(1.06); }
+  #forgive-btn:active{ transform:scale(0.96); }
+
+  #bloom-message{
+    margin-top:20px; font-size:1.3rem; color:var(--gold);
+    opacity:0; transition:opacity 1s ease;
+  }
+  #bloom-message.show{ opacity:1; }
+
+  /* Music control */
+  #music-toggle{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background:rgba(20,22,55,0.75);
+    border:1px solid rgba(232,192,125,0.35);
+    color:var(--gold);
+    padding:9px 20px; border-radius:24px;
+    font-size:0.85rem; cursor:pointer;
+    display:flex; align-items:center; gap:8px;
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition:opacity 0.6s ease, visibility 0s 0.6s;
+    z-index:20;
+    backdrop-filter:blur(6px);
+  }
+  #music-toggle.show{
+    opacity:1; visibility:visible; pointer-events:auto;
+    transition:opacity 0.6s ease 0.4s;
+  }
+  #music-toggle .bar{
+    width:3px; background:var(--gold); border-radius:2px;
+    animation:eq 0.9s ease-in-out infinite;
+  }
+  #music-toggle.muted .bar{ animation-play-state:paused; height:4px !important; }
+  #music-toggle .bar:nth-child(1){ height:10px; animation-delay:0s; }
+  #music-toggle .bar:nth-child(2){ height:16px; animation-delay:0.2s; }
+  #music-toggle .bar:nth-child(3){ height:8px; animation-delay:0.4s; }
+  @keyframes eq{
+    0%,100%{ transform:scaleY(0.4); }
+    50%{ transform:scaleY(1); }
+  }
+  #yt-player-wrap{
+    position:fixed; width:1px; height:1px; overflow:hidden;
+    top:-9999px; left:-9999px;
+  }
+
+  .flower{
+    position:fixed; bottom:-40px; font-size:24px;
+    animation:floatUp 4s ease-in forwards;
+    z-index:5; pointer-events:none;
+  }
+  @keyframes floatUp{
+    0%{ transform:translateY(0) rotate(0deg); opacity:1; }
+    100%{ transform:translateY(-100vh) rotate(360deg); opacity:0; }
+  }
+
+  /* Floating notes */
+  .note{
+    position:fixed;
+    font-size:0.8rem;
+    color:rgba(245,240,230,0.5);
+    animation:drift linear infinite;
+    z-index:1;
+    white-space:nowrap;
+  }
+  @keyframes drift{
+    0%{ transform:translateX(-10vw) translateY(0); }
+    100%{ transform:translateX(110vw) translateY(-40px); }
+  }
+
+  @media (max-width:480px){
+    .envelope{ width:220px; height:150px; }
+    .envelope::before{ border-left:110px solid transparent; border-right:110px solid transparent; border-top:75px solid #2a2050;}
+    #letter{ padding:28px 20px; }
+    #letter h1{ font-size:1.3rem; }
+    #letter p{ font-size:0.95rem; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="stars2"></div>
+<div id="stars3"></div>
+
+<div class="container">
+ <div class="stage">
+
+  <div id="envelope-wrap">
+    <div class="envelope" id="envelope">
+      <div class="heart-seal">💌</div>
+    </div>
+    <div class="prompt-text">اضغط لفتح الرسالة</div>
+    <div class="prompt-sub">tap to open</div>
+  </div>
+
+  <div id="letter">
+    <div class="lang-toggle">
+      <button id="btn-ar" class="active">العربية</button>
+      <button id="btn-en">English</button>
+    </div>
+
+    <div id="ar-block" class="lang-block ar-text active">
+      <h1>آسف</h1>
+      <p>أعرف إني جرحتك، وإن الكلام مش هيرجع الوقت اللي ضاع ولا يمسح الحزن اللي سببته. بس عايز تعرفي إني حاسس بكل حرف بكتبه هنا.</p>
+      <p>مكنتش قصدي أخليكي حاسة إنك مش مهمة، ولا إني مش قدّرت اللي بينا. غلطت، وبتحمّل ده كامل من غير أعذار.</p>
+      <p>إنتي أغلى من إني أخسرك بسبب غلطة أنا اللي عملتها. وعايز أبقى أحسن، مش بس بالكلام، بالفعل كمان.</p>
+      <p>سامحيني.. مش عشان أرتاح أنا، لكن عشان تستاهلي حد يقدر يعتذر صح ويتعلم من غلطه.</p>
+      <div class="signature">— بحبك، وهفضل أحاول</div>
+    </div>
+
+    <div id="en-block" class="lang-block en-text">
+      <h1>I'm Sorry</h1>
+      <p>I know I hurt you, and no words can undo what happened or erase the sadness I caused. But I need you to know that I mean every single word here.</p>
+      <p>I never meant to make you feel unimportant, or like what we have doesn't matter to me. I was wrong, and I own that completely — no excuses.</p>
+      <p>You're worth so much more than losing you over a mistake I made. I want to be better — not just in words, but in what I do next.</p>
+      <p>Forgive me... not so I can feel at ease, but because you deserve someone who knows how to apologize right, and actually learns from it.</p>
+      <div class="signature">— I love you, and I'll keep trying</div>
+    </div>
+
+    <div id="forgive-area">
+      <button id="forgive-btn">🤍 سامحني / Forgive me</button>
+      <div id="bloom-message">تسلمي قلبك أبيض 🌸 / your heart is pure 🌸</div>
+    </div>
+  </div>
+
+ </div>
+</div>
+
+<div id="music-toggle">
+  <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+  <span id="music-label">Say You Won't Let Go</span>
+</div>
+<div id="yt-player-wrap"><div id="yt-player"></div></div>
+
+<script>
+  // Generate stars
+  function makeStars(id, count, sizeMax, durMin, durMax){
+    const container = document.getElementById(id);
+    for(let i=0;i<count;i++){
+      const s = document.createElement('div');
+      s.className='star';
+      const size = Math.random()*sizeMax+1;
+      s.style.width = size+'px';
+      s.style.height = size+'px';
+      s.style.left = Math.random()*100+'%';
+      s.style.top = Math.random()*100+'%';
+      s.style.animationDuration = (Math.random()*(durMax-durMin)+durMin)+'s';
+      container.appendChild(s);
+    }
+  }
+  makeStars('stars', 80, 2, 2, 4);
+  makeStars('stars2', 50, 1.5, 3, 6);
+  makeStars('stars3', 30, 3, 1, 3);
+
+  // Floating notes drifting across screen (capped so they don't pile up)
+  const noteTexts = ['🤍','آسف','sorry','💫','🌙'];
+  let activeNotes = 0;
+  const MAX_NOTES = 6;
+  function spawnNote(){
+    if(activeNotes >= MAX_NOTES) return;
+    activeNotes++;
+    const n = document.createElement('div');
+    n.className='note';
+    n.textContent = noteTexts[Math.floor(Math.random()*noteTexts.length)];
+    n.style.top = Math.random()*85+5+'%';
+    const dur = Math.random()*10+14;
+    n.style.animationDuration = dur+'s';
+    n.style.fontSize = (Math.random()*10+12)+'px';
+    document.body.appendChild(n);
+    setTimeout(()=>{ n.remove(); activeNotes--; }, dur*1000);
+  }
+  setInterval(spawnNote, 3000);
+
+  // Envelope open
+  const envelopeWrap = document.getElementById('envelope-wrap');
+  const envelope = document.getElementById('envelope');
+  const letter = document.getElementById('letter');
+  const musicToggle = document.getElementById('music-toggle');
+  let opened = false;
+  envelopeWrap.addEventListener('click', ()=>{
+    if(opened) return;
+    opened = true;
+    envelope.classList.add('open');
+    setTimeout(()=>{
+      envelopeWrap.classList.add('hidden');
+      letter.classList.add('show');
+    }, 550);
+    startMusic();
+  });
+
+  // Music (YouTube IFrame API) — James Arthur, "Say You Won't Let Go"
+  let ytPlayer = null;
+  let ytReady = false;
+  let wantsPlay = false;
+  let isMuted = true;
+
+  const tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+
+  window.onYouTubeIframeAPIReady = function(){
+    ytPlayer = new YT.Player('yt-player', {
+      videoId: 'HuSqN_jxYEg',
+      playerVars:{
+        autoplay: 0, controls: 0, disablekb: 1,
+        modestbranding: 1, rel: 0, playsinline: 1
+      },
+      events:{
+        onReady: function(){
+          ytReady = true;
+          if(wantsPlay) actuallyStart();
+        }
+      }
+    });
+  };
+
+  function startMusic(){
+    wantsPlay = true;
+    if(ytReady) actuallyStart();
+  }
+
+  function actuallyStart(){
+    ytPlayer.mute();
+    isMuted = true;
+    ytPlayer.playVideo();
+    musicToggle.classList.add('show', 'muted');
+    document.getElementById('music-label').textContent = '🔇 اضغط لسماع الأغنية';
+  }
+
+  musicToggle.addEventListener('click', ()=>{
+    if(!ytPlayer) return;
+    const label = document.getElementById('music-label');
+    if(isMuted){
+      ytPlayer.unMute();
+      ytPlayer.setVolume(60);
+      isMuted = false;
+      musicToggle.classList.remove('muted');
+      label.textContent = "Say You Won't Let Go";
+    } else {
+      ytPlayer.mute();
+      isMuted = true;
+      musicToggle.classList.add('muted');
+      label.textContent = '🔇 اضغط لسماع الأغنية';
+    }
+  });
+
+  // Language toggle
+  const btnAr = document.getElementById('btn-ar');
+  const btnEn = document.getElementById('btn-en');
+  const arBlock = document.getElementById('ar-block');
+  const enBlock = document.getElementById('en-block');
+  btnAr.addEventListener('click', ()=>{
+    btnAr.classList.add('active'); btnEn.classList.remove('active');
+    arBlock.classList.add('active'); enBlock.classList.remove('active');
+  });
+  btnEn.addEventListener('click', ()=>{
+    btnEn.classList.add('active'); btnAr.classList.remove('active');
+    enBlock.classList.add('active'); arBlock.classList.remove('active');
+  });
+
+  // Forgive button -> flower bloom
+  const forgiveBtn = document.getElementById('forgive-btn');
+  const bloomMsg = document.getElementById('bloom-message');
+  const flowers = ['🌸','🌷','🌼','💐','🌹'];
+  forgiveBtn.addEventListener('click', ()=>{
+    bloomMsg.classList.add('show');
+    for(let i=0;i<24;i++){
+      setTimeout(()=>{
+        const f = document.createElement('div');
+        f.className='flower';
+        f.textContent = flowers[Math.floor(Math.random()*flowers.length)];
+        f.style.left = Math.random()*100+'%';
+        f.style.fontSize = (Math.random()*16+18)+'px';
+        document.body.appendChild(f);
+        setTimeout(()=>f.remove(), 4200);
+      }, i*90);
+    }
+  });
+</script>
+
+</body>
+</html>
